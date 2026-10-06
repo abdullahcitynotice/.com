@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Notice Editor</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+    
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    margin:0;
+    padding:0;
+    width:100%;
+    min-height:100%;
+}
+
+body{
+    background:#090c12;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#111;
+    overflow-x:hidden;
+}
+
+.app{
+    width:100%;
+    min-height:100vh;
+    padding:18px 14px 50px;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.top-header{
+    width:min(1150px,100%);
+    margin:0 auto 15px;
+
+    background:linear-gradient(
+        135deg,
+        #111b2c,
+        #05070b
+    );
+
+    border:1px solid #c99a28;
+    border-radius:15px;
+    padding:15px 18px;
+
+    box-shadow:
+        0 12px 35px rgba(0,0,0,.35);
+}
+
+.top-header h1{
+    margin:0;
+    text-align:center;
+
+    color:#e9c456;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:clamp(19px,2.3vw,28px);
+}
+
+.top-header p{
+    margin:5px 0 0;
+    text-align:center;
+
+    color:#d8dce4;
+
+    font-size:clamp(11px,1.2vw,14px);
+}
+
+/* =========================
+   EDITOR
+========================= */
+
+.editor{
+    width:min(1150px,100%);
+    margin:0 auto 18px;
+
+    background:#fff;
+
+    border:1px solid #d1a137;
+    border-radius:15px;
+
+    padding:17px;
+
+    box-shadow:
+        0 15px 45px rgba(0,0,0,.32);
+}
+
+.editor-heading{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+
+    margin-bottom:15px;
+}
+
+.editor-heading span{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#d39b19;
+}
+
+.editor-heading h2{
+    margin:0;
+
+    color:#15213a;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size:clamp(17px,2vw,22px);
+}
+
+/* =========================
+   FORM
+========================= */
+
+.form-grid{
+    display:grid;
+
+    grid-template-columns:
+        repeat(2,minmax(0,1fr));
+
+    gap:11px;
+}
+
+.form-group{
+    min-width:0;
+}
+
+.form-group label{
+    display:block;
+
+    margin-bottom:5px;
+
+    color:#243149;
+
+    font-size:12px;
+    font-weight:700;
+}
+
+.form-group input{
+    width:100%;
+    height:42px;
+
+    padding:0 11px;
+
+    border:1px solid #caa13e;
+    border-radius:8px;
+
+    background:#fff;
+    color:#111;
+
+    font-size:14px;
+
+    outline:none;
+}
+
+.form-group input:focus{
+    border-color:#a5740b;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(199,151,35,.14);
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.actions{
+    display:flex;
+
+    justify-content:center;
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    gap:9px;
+
+    margin-top:15px;
+}
+
+.action-btn{
+    border:0;
+    border-radius:9px;
+
+    min-width:145px;
+
+    padding:11px 17px;
+
+    cursor:pointer;
+
+    font-size:13px;
+    font-weight:700;
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease;
+}
+
+.action-btn:hover{
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 6px 18px rgba(0,0,0,.16);
+}
+
+.preview-button{
+    background:
+        linear-gradient(
+            135deg,
+            #f6d56a,
+            #c58a12
+        );
+
+    color:#111;
+}
+
+.pdf-button{
+    background:
+        linear-gradient(
+            135deg,
+            #18263b,
+            #05080d
+        );
+
+    color:#fff;
+
+    border:1px solid #d7aa38;
+}
+
+.png-button{
+    background:#fff;
+    color:#111;
+
+    border:1px solid #b8b8b8;
+}
+
+.reset-button{
+    background:#ededed;
+    color:#333;
+}
+
+/* =========================
+   ARTWORK
+========================= */
+
+.artwork-holder{
+    width:min(1500px,100%);
+    margin:0 auto;
+
+    background:#05070b;
+
+    border:1px solid rgba(213,165,47,.55);
+
+    border-radius:14px;
+
+    padding:8px;
+
+    box-shadow:
+        0 18px 60px rgba(0,0,0,.48);
+}
+
+.image-scroll{
+    width:100%;
+    overflow:auto;
+
+    scrollbar-width:thin;
+}
+
+.artboard{
+    position:relative;
+
+    width:100%;
+    max-width:1450px;
+
+    margin:0 auto;
+
+    overflow:hidden;
+
+    background:#fff;
+
+    line-height:0;
+
+    aspect-ratio:1024 / 1536;
+}
+
+.main-image{
+    display:block;
+
+    width:100%;
+    height:100%;
+
+    object-fit:fill;
+
+    margin:0;
+    padding:0;
+
+    user-select:none;
+
+    -webkit-user-drag:none;
+}
+
+/* =========================================================
+   TEXT OVERLAY
+========================================================= */
+
+.overlay{
+    position:absolute;
+
+    z-index:20;
+
+    margin:0;
+    padding:0;
+
+    background:transparent;
+
+    border:0;
+
+    border-radius:0;
+
+    outline:none;
+
+    box-shadow:none;
+
+    color:#111;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-weight:700;
+
+    line-height:1;
+
+    white-space:nowrap;
+
+    overflow:visible;
+
+    text-overflow:clip;
+
+    appearance:none;
+    -webkit-appearance:none;
+}
+
+.overlay:focus{
+    outline:none;
+    background:transparent;
+    box-shadow:none;
+}
+
+/* =========================================================
+   EXACT IMAGE POSITIONS
+   ---------------------------------------------------------
+   These are percentages of the ORIGINAL image.
+
+   Adjust ONLY these values if your image has
+   slightly different blank-field locations.
+========================================================= */
+
+/* NAME */
+
+.customer-main{
+    left:18%;
+    top:26.5%;
+
+    width:17%;
+    height:4.5%;
+
+    font-size:clamp(
+        17px,
+        9vw,
+        33px
+    );
+}
+
+/* SERIAL NUMBER */
+
+.serial-main{
+    left:55.2%;
+    top:26.5%;
+
+    width:14%;
+    height:4.5%;
+
+    font-size:clamp(
+            17px,
+        9vw,
+        33px
+    );
+}
+
+/* CITY */
+
+.city-main{
+    left:84.2%;
+    top:26.6%;
+
+    width:17%;
+    height:4.5%;
+
+    font-size:clamp(
+         17px,
+        9vw,
+        33px
+    );
+}
+
+/* DATE */
+
+.date-main{
+    left:74%;
+    top:33%;
+
+    width:20%;
+    height:4.5%;
+
+    font-size:clamp(
+          17px,
+        9vw,
+        33px
+    );
+
+    text-align:left;
+}
+
+/* WHITE FIELD BEFORE REGARDS */
+
+.regards-main{
+    left:30%;
+    top:88.5%;
+
+    width:60%;
+    height:5%;
+
+    font-size:clamp(
+         17px,
+        9vw,
+        33px
+    );
+
+    text-align:left;
+}
+
+/* =========================
+   PREVIEW
+========================= */
+
+.preview-mode .overlay{
+    pointer-events:none;
+
+    outline:none !important;
+    box-shadow:none !important;
+}
+
+/* =========================
+   EXPORT
+========================= */
+
+.exporting .overlay{
+    outline:none !important;
+
+    box-shadow:none !important;
+
+    caret-color:transparent;
+
+    background:transparent !important;
+
+    border:0 !important;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:800px){
+
+    .app{
+        padding:
+            9px
+            6px
+            30px;
+    }
+
+    .top-header{
+        padding:12px 10px;
+        border-radius:11px;
+        margin-bottom:10px;
+    }
+
+    .editor{
+        padding:11px;
+        border-radius:11px;
+        margin-bottom:10px;
+    }
+
+    .form-grid{
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+
+        gap:8px;
+    }
+
+    .form-group label{
+        font-size:11px;
+        margin-bottom:4px;
+    }
+
+    .form-group input{
+        height:40px;
+
+        padding:0 9px;
+
+        font-size:13px;
+
+        border-radius:7px;
+    }
+
+    .actions{
+        display:grid;
+
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+
+        gap:7px;
+    }
+
+    .action-btn{
+        width:100%;
+        min-width:0;
+
+        padding:10px 5px;
+
+        font-size:11px;
+    }
+
+    .artwork-holder{
+        padding:4px;
+        border-radius:10px;
+    }
+
+    .image-scroll{
+        overflow-x:auto;
+        overflow-y:hidden;
+    }
+
+    .artboard{
+        width:100%;
+        max-width:none;
+    }
+}
+
+/* =========================
+   VERY SMALL MOBILE
+========================= */
+
+@media(max-width:480px){
+
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .top-header h1{
+        font-size:18px;
+    }
+
+    .top-header p{
+        font-size:10px;
+    }
+
+    .editor-heading h2{
+        font-size:17px;
+    }
+}
+
+/* =========================
+   PRINT
+========================= */
+
+@media print{
+
+    body{
+        background:#fff;
+    }
+
+    .top-header,
+    .editor{
+        display:none !important;
+    }
+
+    .app{
+        padding:0;
+    }
+
+    .artwork-holder{
+        border:0;
+        box-shadow:none;
+        padding:0;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- HEADER -->
+
+    <header class="top-header">
+
+        <h1>
+            Promotional Notice Editor
+        </h1>
+
+        <p>
+            Fill in the details and download the completed notice.
+        </p>
+
+    </header>
+
+
+    <!-- FORM -->
+
+    <section class="editor">
+
+        <div class="editor-heading">
+
+            <span></span>
+
+            <h2>
+                Fill Notice Details
+            </h2>
+
+            <span></span>
+
+        </div>
+
+
+        <div class="form-grid">
+
+            <!-- NAME -->
+
+            <div class="form-group">
+
+                <label>
+                    Name
+                </label>
+
+                <input
+                    id="fCustomer"
+                    type="text"
+                    placeholder="Enter name"
+                    oninput="updateArtwork()"
+                >
+
+            </div>
+
+
+            <!-- SERIAL -->
+
+            <div class="form-group">
+
+                <label>
+                    Serial Number
+                </label>
+
+                <input
+                    id="fSerial"
+                    type="text"
+                    placeholder="Enter serial number"
+                    oninput="updateArtwork()"
+                >
+
+            </div>
+
+
+            <!-- CITY -->
+
+            <div class="form-group">
+
+                <label>
+                    City
+                </label>
+
+                <input
+                    id="fCity"
+                    type="text"
+                    placeholder="Enter city"
+                    oninput="updateArtwork()"
+                >
+
+            </div>
+
+
+            <!-- DATE -->
+
+            <div class="form-group">
+
+                <label>
+                    Date
+                </label>
+
+                <input
+                    id="fDate"
+                    type="text"
+                    placeholder="Enter date"
+                    oninput="updateArtwork()"
+                >
+
+            </div>
+
+
+            <!-- REGARDS FIELD -->
+
+            <div class="form-group">
+
+                <label>
+                    White Field Before Regards
+                </label>
+
+                <input
+                    id="fRegards"
+                    type="text"
+                    placeholder="Enter text"
+                    oninput="updateArtwork()"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- ACTIONS -->
+
+        <div class="actions">
+
+            <button
+                type="button"
+                class="action-btn preview-button"
+                onclick="togglePreview()">
+
+                👁 Preview
+
+            </button>
+
+
+            <button
+                type="button"
+                class="action-btn pdf-button"
+                onclick="downloadPDF()">
+
+                📄 Download PDF
+
+            </button>
+
+
+            <button
+                type="button"
+                class="action-btn png-button"
+                onclick="downloadPNG()">
+
+                🖼 Download Image
+
+            </button>
+
+
+            <button
+                type="button"
+                class="action-btn reset-button"
+                onclick="resetForm()">
+
+                ↺ Reset
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ARTWORK -->
+
+    <section class="artwork-holder">
+
+        <div class="image-scroll">
+
+            <div
+                id="artboard"
+                class="artboard">
+
+                <!-- ORIGINAL IMAGE -->
+
+                <img
+                    id="mainImage"
+                    class="main-image"
+                    src="image.png"
+                    alt="Notice"
+                >
+
+
+                <!-- NAME -->
+
+                <input
+                    id="oCustomer"
+                    class="overlay customer-main"
+                    type="text"
+                    oninput="changeFromArtwork('customer',this.value)"
+                >
+
+
+                <!-- SERIAL NUMBER -->
+
+                <input
+                    id="oSerial"
+                    class="overlay serial-main"
+                    type="text"
+                    oninput="changeFromArtwork('serial',this.value)"
+                >
+
+
+                <!-- CITY -->
+
+                <input
+                    id="oCity"
+                    class="overlay city-main"
+                    type="text"
+                    oninput="changeFromArtwork('city',this.value)"
+                >
+
+
+                <!-- DATE -->
+
+                <input
+                    id="oDate"
+                    class="overlay date-main"
+                    type="text"
+                    oninput="changeFromArtwork('date',this.value)"
+                >
+
+
+                <!-- WHITE FIELD BEFORE REGARDS -->
+
+                <input
+                    id="oRegards"
+                    class="overlay regards-main"
+                    type="text"
+                    oninput="changeFromArtwork('regards',this.value)"
+                >
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   IMAGE
+========================================================= */
+
+const image =
+    document.getElementById("mainImage");
+
+const artboard =
+    document.getElementById("artboard");
+
+
+/* =========================================================
+   NATURAL IMAGE RATIO
+========================================================= */
+
+function setNaturalRatio(){
+
+    if(
+        !image.naturalWidth ||
+        !image.naturalHeight
+    ){
+
+        return;
+
+    }
+
+    artboard.style.aspectRatio =
+        image.naturalWidth +
+        " / " +
+        image.naturalHeight;
+}
+
+
+if(image.complete){
+
+    setNaturalRatio();
+
+}else{
+
+    image.addEventListener(
+        "load",
+        setNaturalRatio
+    );
+}
+
+
+/* =========================================================
+   FORM VALUE
+========================================================= */
+
+function formValue(id){
+
+    const element =
+        document.getElementById(id);
+
+    return element
+        ? element.value
+        : "";
+}
+
+
+/* =========================================================
+   FIELD MAP
+========================================================= */
+
+const fieldMap = {
+
+    customer:{
+        form:"fCustomer",
+        artwork:"oCustomer"
+    },
+
+    serial:{
+        form:"fSerial",
+        artwork:"oSerial"
+    },
+
+    city:{
+        form:"fCity",
+        artwork:"oCity"
+    },
+
+    date:{
+        form:"fDate",
+        artwork:"oDate"
+    },
+
+    regards:{
+        form:"fRegards",
+        artwork:"oRegards"
+    }
+
+};
+
+
+/* =========================================================
+   UPDATE ARTWORK FROM FORM
+========================================================= */
+
+function updateArtwork(){
+
+    Object.keys(fieldMap).forEach(
+        function(field){
+
+            const data =
+                fieldMap[field];
+
+            const value =
+                document.getElementById(
+                    data.form
+                ).value;
+
+            document.getElementById(
+                data.artwork
+            ).value = value;
+
+        }
+    );
+}
+
+
+/* =========================================================
+   UPDATE FORM FROM ARTWORK
+========================================================= */
+
+function changeFromArtwork(
+    field,
+    value
+){
+
+    const data =
+        fieldMap[field];
+
+    if(!data){
+        return;
+    }
+
+    document.getElementById(
+        data.form
+    ).value = value;
+
+    document.getElementById(
+        data.artwork
+    ).value = value;
+}
+
+
+/* =========================================================
+   PREVIEW
+========================================================= */
+
+let preview = false;
+
+function togglePreview(){
+
+    preview = !preview;
+
+    artboard.classList.toggle(
+        "preview-mode",
+        preview
+    );
+
+    const button =
+        document.querySelector(
+            ".preview-button"
+        );
+
+    if(preview){
+
+        button.innerHTML =
+            "✏ Edit Form";
+
+    }else{
+
+        button.innerHTML =
+            "👁 Preview";
+    }
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetForm(){
+
+    document.getElementById(
+        "fCustomer"
+    ).value = "";
+
+    document.getElementById(
+        "fSerial"
+    ).value = "";
+
+    document.getElementById(
+        "fCity"
+    ).value = "";
+
+    document.getElementById(
+        "fDate"
+    ).value = "";
+
+    document.getElementById(
+        "fRegards"
+    ).value = "";
+
+    updateArtwork();
+}
+
+
+/* =========================================================
+   PREPARE EXPORT CANVAS
+========================================================= */
+
+async function makeCanvas(){
+
+    const previousPreview =
+        preview;
+
+    if(!preview){
+
+        artboard.classList.add(
+            "preview-mode"
+        );
+    }
+
+    artboard.classList.add(
+        "exporting"
+    );
+
+    await new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                100
+            )
+    );
+
+    const canvas =
+        await html2canvas(
+            artboard,
+            {
+                scale:3,
+
+                useCORS:true,
+
+                allowTaint:false,
+
+                backgroundColor:"#fff",
+
+                logging:false,
+
+                imageTimeout:20000
+            }
+        );
+
+    artboard.classList.remove(
+        "exporting"
+    );
+
+    if(!previousPreview){
+
+        artboard.classList.remove(
+            "preview-mode"
+        );
+    }
+
+    return canvas;
+}
+
+
+/* =========================================================
+   DOWNLOAD PNG
+========================================================= */
+
+async function downloadPNG(){
+
+    try{
+
+        const canvas =
+            await makeCanvas();
+
+        const customer =
+            formValue("fCustomer")
+                .trim()
+                .replace(
+                    /[^a-z0-9_-]/gi,
+                    "_"
+                );
+
+        const link =
+            document.createElement("a");
+
+        link.download =
+            "Notice_" +
+            (customer || "Completed") +
+            ".png";
+
+        link.href =
+            canvas.toDataURL(
+                "image/png",
+                1
+            );
+
+        link.click();
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Unable to create the image."
+        );
+    }
+}
+
+
+/* =========================================================
+   DOWNLOAD PDF
+========================================================= */
+
+async function downloadPDF(){
+
+    try{
+
+        const canvas =
+            await makeCanvas();
+
+        const imageData =
+            canvas.toDataURL(
+                "image/png",
+                1
+            );
+
+        const {
+            jsPDF
+        } =
+            window.jspdf;
+
+        const orientation =
+            canvas.width >= canvas.height
+            ? "landscape"
+            : "portrait";
+
+        const pdf =
+            new jsPDF({
+                orientation:orientation,
+                unit:"mm",
+                format:"a4",
+                compress:true
+            });
+
+        const pageWidth =
+            pdf.internal.pageSize.getWidth();
+
+        const pageHeight =
+            pdf.internal.pageSize.getHeight();
+
+        const ratio =
+            canvas.width /
+            canvas.height;
+
+        let width =
+            pageWidth;
+
+        let height =
+            width / ratio;
+
+        if(height > pageHeight){
+
+            height =
+                pageHeight;
+
+            width =
+                height * ratio;
+        }
+
+        const x =
+            (pageWidth - width) / 2;
+
+        const y =
+            (pageHeight - height) / 2;
+
+        pdf.addImage(
+            imageData,
+            "PNG",
+            x,
+            y,
+            width,
+            height,
+            undefined,
+            "FAST"
+        );
+
+        const customer =
+            formValue("fCustomer")
+                .trim()
+                .replace(
+                    /[^a-z0-9_-]/gi,
+                    "_"
+                );
+
+        const serial =
+            formValue("fSerial")
+                .trim()
+                .replace(
+                    /[^a-z0-9_-]/gi,
+                    "_"
+                );
+
+        pdf.save(
+            "Notice_" +
+            (customer || "Customer") +
+            "_" +
+            (serial || "Form") +
+            ".pdf"
+        );
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Unable to create the PDF."
+        );
+    }
+}
+
+
+/* =========================================================
+   IMAGE ERROR
+========================================================= */
+
+image.addEventListener(
+    "error",
+    function(){
+
+        document.querySelector(
+            ".artwork-holder"
+        ).innerHTML = `
+
+            <div
+                style="
+                    color:#d9b84e;
+                    text-align:center;
+                    padding:60px 20px;
+                    font-weight:700;
+                "
+            >
+
+                image.png was not found.
+
+                <br><br>
+
+                Put image.png in the same folder
+                as this HTML file.
+
+            </div>
+
+        `;
+    }
+);
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+updateArtwork();
+
+</script>
+
+</body>
+</html>
